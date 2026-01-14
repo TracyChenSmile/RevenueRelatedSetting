@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營收分類管理系統 V8 (Blazor Telerik 模擬原型)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Telerik / Kendo UI Theme Simulation */
+        :root {
+            --kendo-primary: #0058E9;
+            --kendo-primary-hover: #004ccb;
+            --kendo-bg: #F4F6F9;
+            --kendo-text: #424242;
+            --kendo-border: #dee2e6;
+            --kendo-selected-bg: rgba(0, 88, 233, 0.1);
+        }
+
+        body {
+            font-family: "Noto Sans TC", sans-serif;
+            background-color: var(--kendo-bg);
+            color: var(--kendo-text);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Components --- */
+        .k-button {
+            background-color: #f5f5f5;
+            border: 1px solid #dcdcdc;
+            color: #444;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .k-button:hover:not(:disabled) { background-color: #e8e8e8; }
+        .k-button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .k-button-primary {
+            background-color: var(--kendo-primary);
+            color: white;
+            border-color: var(--kendo-primary);
+        }
+        .k-button-primary:hover:not(:disabled) { background-color: var(--kendo-primary-hover); }
+        .k-button-flat { background: transparent; border: none; color: var(--kendo-primary); }
+        .k-button-icon { padding: 4px; border: none; background: transparent; color: #888; }
+        .k-button-icon:hover { color: #d32f2f; background: rgba(255,0,0,0.1); border-radius: 4px; }
+        
+        .k-grid {
+            background: white;
+            border: 1px solid var(--kendo-border);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .k-grid-header { background-color: #fafafa; border-bottom: 1px solid var(--kendo-border); font-weight: 600; color: #666; font-size: 13px; }
+        .k-grid-header th { padding: 10px 12px; text-align: left; }
+        .k-grid-body td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px; vertical-align: middle; }
+        .k-grid-row:hover { background-color: #f5f7fa; }
+
+        /* TreeGrid Specific */
+        .k-treegrid-row { background: #fff; border-bottom: 1px solid #eee; display: flex; align-items: center; padding: 8px 12px; }
+        .k-treegrid-row:hover { background-color: #f5f7fa; }
+        
+        /* TreeView */
+        .k-treeview-item { padding: 2px 0; cursor: pointer; font-size: 14px; }
+        .k-treeview-content { padding: 6px 8px; border-radius: 4px; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+        .k-treeview-content:hover { background-color: #f0f0f0; }
+        .k-treeview-content.k-selected { background-color: var(--kendo-selected-bg); color: var(--kendo-primary); font-weight: 500; }
+        .k-tree-group { margin-left: 20px; border-left: 1px solid #eee; }
+        
+        .tree-node-info { display: flex; align-items: center; gap: 6px; flex: 1; }
+        .warning-badge { font-size: 11px; background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; padding: 1px 6px; border-radius: 10px; display: inline-flex; align-items: center; gap: 3px; margin-left: 8px;}
+
+        .nav-tabs { background: white; border-bottom: 1px solid var(--kendo-border); padding: 0 20px; display: flex; gap: 20px; }
+        .nav-item { padding: 15px 5px; font-size: 14px; font-weight: 500; color: #666; cursor: pointer; border-bottom: 3px solid transparent; }
+        .nav-item.active { color: var(--kendo-primary); border-bottom-color: var(--kendo-primary); }
+        .nav-item-badge { background: #FFC000; color: #333; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 4px; }
+
+        .k-badge { padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+        .k-badge-success { background-color: #eaf7e4; color: #37b400; }
+        .k-badge-warning { background-color: #fff4d6; color: #ffc000; }
+        .k-badge-neutral { background-color: #f0f0f0; color: #666; }
+
+        /* Dialog / Window */
+        .k-window-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .k-window { background: white; width: 800px; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; animation: slideIn 0.3s ease-out; }
+        .k-window-titlebar { padding: 12px 16px; border-bottom: 1px solid var(--kendo-border); display: flex; justify-content: space-between; align-items: center; font-weight: 600; background-color: #fafafa; border-radius: 6px 6px 0 0; }
+        .k-window-content { padding: 0; display: flex; flex-direction: column; height: 100%; }
+
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .k-form-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #666; }
+        .k-textbox, .k-dropdown { width: 100%; padding: 8px 10px; border: 1px solid var(--kendo-border); border-radius: 4px; font-size: 14px; outline: none; transition: border 0.2s; }
+        .k-textbox:focus, .k-dropdown:focus { border-color: var(--kendo-primary); box-shadow: 0 0 0 2px rgba(0,88,233, 0.1); }
+        
+        /* Layouts */
+        .mapping-container { display: flex; height: 450px; }
+        .mapping-left { width: 35%; border-right: 1px solid var(--kendo-border); background: #f9f9f9; display: flex; flex-direction: column; }
+        .mapping-right { width: 65%; display: flex; flex-direction: column; padding: 16px; background: #fff; }
+
+        /* Overview List Styles */
+        .overview-type-item { 
+            padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #eee; border-left: 4px solid transparent; transition: 0.1s; display: flex; justify-content: space-between; align-items: center; 
+        }
+        .overview-type-item:hover { background: #fff; }
+        .overview-type-item.selected { background: #fff; border-left-color: var(--kendo-primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 1; }
+        .overview-type-item .count-badge { background: #e0e0e0; color: #666; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+        .overview-type-item.selected .count-badge { background: var(--kendo-primary); color: white; }
+
+        .type-list-header { padding: 10px 12px; font-weight: 600; font-size: 13px; color: #666; border-bottom: 1px solid #eee; background: #f5f5f5; display:flex; justify-content: space-between;}
+        .type-list { overflow-y: auto; flex: 1; }
+        .type-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; transition: 0.1s; display: flex; justify-content: space-between; align-items: center; }
+        .type-item:hover { background: #eef2ff; }
+        .type-item.selected { background: #e0eaff; border-left: 4px solid var(--kendo-primary); color: var(--kendo-primary); font-weight: 500; }
+
+        .tree-container { flex: 1; overflow-y: auto; border: 1px solid var(--kendo-border); border-radius: 4px; padding: 8px; margin-top: 8px; }
+        
+        /* Tree Items in Mapping */
+        .ddt-item { padding: 6px 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; border-radius: 4px; transition: background 0.1s; }
+        .ddt-item:hover { background: #f5f5f5; }
+        .ddt-item.disabled { color: #aaa; cursor: not-allowed; opacity: 0.7; }
+        .ddt-item.leaf { color: #333; }
+        .ddt-item.leaf:not(.disabled):hover { background: var(--kendo-selected-bg); color: var(--kendo-primary); }
+        .ddt-item.selected { background: var(--kendo-selected-bg); color: var(--kendo-primary); font-weight: bold; border-left: 3px solid var(--kendo-primary); }
+
+        .view-section { display: none; height: 100%; overflow: auto; padding: 20px; }
+        .view-section.active { display: block; }
+        
+        .error-overlay { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #dc2626; text-align: center; padding: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-6 py-3 flex justify-between items-center shadow-sm z-10">
+        <div class="flex items-center gap-3">
+            <div class="bg-blue-600 text-white w-8 h-8 rounded flex items-center justify-center font-bold">R</div>
+            <div>
+                <h1 class="font-bold text-lg text-gray-700">營收分類管理系統 V8</h1>
+                <div class="text-xs text-gray-400">Blazor Web App / Telerik UI</div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button class="k-button k-button-primary" onclick="switchTab('tab4', document.querySelectorAll('.nav-item')[3])">
+                <i class="fa-solid fa-bell text-yellow-300"></i> 您有 <span id="headerBadge">3</span> 筆待設定項目
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <div class="nav-item active" onclick="switchTab('tab1', this)">1. 營收類型定義</div>
+        <div class="nav-item" onclick="switchTab('tab2', this)">2. 類別階層維護</div>
+        <div class="nav-item" onclick="switchTab('tab3', this)">3. 專案映射總覽</div>
+        <div class="nav-item" onclick="switchTab('tab4', this)">
+            4. 待設定清單 <span class="nav-item-badge" id="navBadge">3</span>
+        </div>
+    </div>
+
+    <!-- View 1: 營收類型 -->
+    <div id="tab1" class="view-section active">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-700">營收類型設定</h2>
+                <button class="k-button k-button-primary" onclick="openTypeModal()"><i class="fa-solid fa-plus"></i> 新增類型</button>
+            </div>
+            <div class="k-grid">
+                <table class="w-full text-left border-collapse">
+                    <thead class="k-grid-header">
+                        <tr>
+                            <th>名稱</th>
+                            <th>最大階層數</th>
+                            <th>狀態</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="typeGridBody" class="k-grid-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- View 2: 類別階層 -->
+    <div id="tab2" class="view-section">
+        <div class="max-w-6xl mx-auto h-full flex flex-col">
+            <!-- Toolbar -->
+            <div class="mb-4 flex items-center gap-3 bg-white p-3 rounded border border-gray-200 shadow-sm">
+                <label class="font-bold text-sm text-gray-600">目前編輯類型：</label>
+                <select class="k-dropdown w-64" id="catTypeSelector" onchange="loadTreeForEdit()">
+                    <!-- Options populated by JS -->
+                </select>
+                <div class="h-6 w-px bg-gray-300 mx-2"></div>
+                <button class="k-button" onclick="openAddCategoryModal(true)">
+                    <i class="fa-solid fa-folder-plus text-blue-600"></i> 新增根類別
+                </button>
+            </div>
+
+            <!-- Splitter -->
+            <div class="flex-1 flex border border-gray-300 rounded bg-white overflow-hidden shadow-sm" style="min-height: 500px;">
+                <!-- Left: Tree -->
+                <div class="w-1/3 border-r border-gray-200 p-4 bg-gray-50 overflow-y-auto">
+                    <div id="editTreeContainer"></div>
+                </div>
+                <!-- Right: Details -->
+                <div class="w-2/3 p-8 bg-white relative" id="catDetailPanel">
+                    <div id="emptyState" class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <i class="fa-regular fa-hand-point-left text-4xl mb-4"></i>
+                        <p>請選擇左側類別節點以進行編輯</p>
+                    </div>
+
+                    <div id="editState" class="hidden">
+                        <div class="flex justify-between items-start mb-6 border-b pb-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-800" id="editCatNameTitle">Category</h2>
+                                <p class="text-sm text-gray-500 mt-1">ID: <span id="editCatId"></span></p>
+                            </div>
+                            <span class="k-badge k-badge-success" id="editCatLevelBadge">L1</span>
+                        </div>
+                        <div class="space-y-4 max-w-md">
+                            <div>
+                                <label class="k-form-label">類別名稱</label>
+                                <input type="text" class="k-textbox" id="editCatNameInput">
+                            </div>
+                            <div>
+                                <label class="k-form-label">描述</label>
+                                <textarea class="k-textbox" rows="3" id="editCatDescInput"></textarea>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <label class="k-form-label mb-0">啟用狀態</label>
+                                <div class="k-switch checked" onclick="this.classList.toggle('checked')"></div>
+                            </div>
+                        </div>
+                        <div class="mt-8 pt-4 border-t flex gap-3">
+                            <button class="k-button k-button-primary" onclick="saveCategory()">
+                                <i class="fa-solid fa-save"></i> 儲存變更
+                            </button>
+                            <button class="k-button" id="btnAddSubCat" onclick="openAddCategoryModal(false)">
+                                <i class="fa-solid fa-folder-tree"></i> 新增子類別
+                            </button>
+                            <button class="k-button text-red-500 hover:bg-red-50 ml-auto" onclick="deleteCategory()">
+                                <i class="fa-solid fa-trash"></i> 刪除此類別
+                            </button>
+                        </div>
+                        <div id="maxDepthWarning" class="mt-2 text-xs text-orange-500 hidden">
+                            <i class="fa-solid fa-triangle-exclamation"></i> 此類型最大層級限制為 <span id="lblMaxDepth">3</span>，無法再新增子類別。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View 3: 總覽 (New Split Layout) -->
+    <div id="tab3" class="view-section">
+        <div class="max-w-7xl mx-auto h-full flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-700">專案映射總覽</h2>
+                <div class="text-xs text-gray-400"><i class="fa-solid fa-layer-group"></i> 請選擇左側類型查看詳情</div>
+            </div>
+            
+            <!-- Split Layout -->
+            <div class="flex border border-gray-300 rounded bg-white overflow-hidden shadow-sm flex-1" style="min-height: 500px;">
+                <!-- Left: Types -->
+                <div class="w-1/4 border-r border-gray-200 bg-gray-50 flex flex-col">
+                    <div class="p-3 border-b border-gray-200 font-bold text-gray-600 bg-gray-100 flex justify-between items-center">
+                        <span>營收類型列表</span>
+                        <span class="text-xs font-normal bg-gray-200 px-2 rounded">Count</span>
+                    </div>
+                    <div id="overviewTypeList" class="overflow-y-auto flex-1 bg-gray-50">
+                        <!-- JS Rendered -->
+                    </div>
+                </div>
+
+                <!-- Right: TreeGrid -->
+                <div class="w-3/4 flex flex-col bg-white">
+                    <!-- TreeGrid Header -->
+                    <div class="border-b border-gray-200 flex bg-gray-50 text-gray-600 text-sm font-bold" style="padding-right: 17px;">
+                        <div class="flex-1 p-3">層級 / 專案名稱</div>
+                        <div class="w-24 p-3">狀態</div>
+                        <div class="w-24 p-3">操作</div>
+                    </div>
+                    <!-- TreeGrid Body -->
+                    <div id="overviewTreeContainer" class="overflow-y-auto flex-1 p-0">
+                         <!-- JS Rendered -->
+                         <div class="flex items-center justify-center h-full text-gray-400">
+                             <p>請點擊左側類型以載入資料</p>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View 4: 待設定清單 -->
+    <div id="tab4" class="view-section">
+        <div class="max-w-5xl mx-auto">
+            <div class="flex items-center gap-3 mb-6">
+                <h2 class="text-xl font-bold text-gray-700">待設定清單</h2>
+                <span id="pendingCountLabel" class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-bold">3 筆未處理</span>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded p-4 mb-6 text-sm text-blue-700 flex items-start gap-3">
+                <i class="fa-solid fa-circle-info mt-0.5"></i>
+                <div>
+                    <strong>操作說明：</strong> 
+                    以下列表顯示尚未歸類的專案項目。請點擊「立即設定」按鈕，在彈出視窗中選擇左側類型與右側詳細類別。
+                </div>
+            </div>
+            <div class="space-y-3" id="pendingListContainer"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Revenue Type -->
+    <div id="typeModal" class="k-window-overlay hidden">
+        <div class="k-window" style="width: 500px;">
+            <div class="k-window-titlebar">
+                <span id="typeModalTitle">新增/編輯 類型</span>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeTypeModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="k-window-content" style="padding: 20px;">
+                <div class="space-y-4">
+                    <input type="hidden" id="typeIdInput">
+                    <div>
+                        <label class="k-form-label">名稱</label>
+                        <input type="text" class="k-textbox" id="typeNameInput">
+                    </div>
+                    <div>
+                        <label class="k-form-label">最大階層數 (Layer Limit)</label>
+                        <input type="number" class="k-textbox" id="typeDepthInput" value="3" min="1" max="5">
+                    </div>
+                    <div>
+                        <label class="k-form-label">描述</label>
+                        <textarea class="k-textbox" id="typeDescInput"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-4">
+                        <button class="k-button" onclick="closeTypeModal()">取消</button>
+                        <button class="k-button k-button-primary" onclick="saveType()">儲存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Category -->
+    <div id="addCategoryModal" class="k-window-overlay hidden">
+        <div class="k-window" style="width: 500px;">
+            <div class="k-window-titlebar">
+                <span id="addCatTitle">新增類別</span>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeAddCategoryModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="k-window-content" style="padding: 20px;">
+                <div class="space-y-4">
+                    <input type="hidden" id="addCatIsRoot">
+                    <div class="bg-gray-50 p-3 rounded text-sm text-gray-600" id="addCatInfo"></div>
+                    <div>
+                        <label class="k-form-label">類別名稱</label>
+                        <input type="text" class="k-textbox" id="addCatName" placeholder="輸入名稱...">
+                    </div>
+                    <div>
+                        <label class="k-form-label">描述 (選填)</label>
+                        <textarea class="k-textbox" id="addCatDesc"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-4">
+                        <button class="k-button" onclick="closeAddCategoryModal()">取消</button>
+                        <button class="k-button k-button-primary" onclick="confirmAddCategory()">確認新增</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Mapping (Split Layout) -->
+    <div id="mappingModal" class="k-window-overlay hidden">
+        <div class="k-window">
+            <div class="k-window-titlebar">
+                <span><i class="fa-solid fa-pen-to-square text-blue-500 mr-2"></i> 設定營收歸屬</span>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeMappingModal()"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="k-window-content">
+                <div style="padding: 16px; border-bottom: 1px solid #eee;">
+                    <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                        <div class="text-xs text-gray-500">正在設定專案：</div>
+                        <div class="font-bold text-gray-800" id="mappingProjectName">...</div>
+                    </div>
+                </div>
+                
+                <div class="mapping-container">
+                    <input type="hidden" id="mappingProjectId">
+                    <div class="mapping-left">
+                        <div class="type-list-header">
+                            <span>營收類型</span>
+                            <span>限制階層</span>
+                        </div>
+                        <div class="type-list" id="mappingTypeList"></div>
+                    </div>
+                    <div class="mapping-right">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="k-form-label mb-0">詳細分類 (請點選最後一階)</label>
+                            <span class="text-xs text-blue-500" id="rightPanelHint"></span>
+                        </div>
+                        <div class="tree-container" id="mappingTreeContainer">
+                            <div class="flex items-center justify-center h-full text-gray-400 text-sm">
+                                <i class="fa-solid fa-arrow-left mr-2"></i> 請先從左側選擇一項類型
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="k-form-label">備註</label>
+                            <textarea class="k-textbox h-20" id="mappingRemark"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 16px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 8px;">
+                    <button class="k-button" onclick="closeMappingModal()">取消</button>
+                    <button id="btnSaveMapping" class="k-button k-button-primary" disabled onclick="submitMapping()">確認儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        // --- DATA STORE ---
+        let revenueTypes = [
+            { id: 1, name: "軟體服務", maxDepth: 3, status: true, desc: "包含授權、維護" },
+            { id: 2, name: "硬體銷售", maxDepth: 2, status: true, desc: "伺服器周邊" },
+            { id: 3, name: "測試類型-未完成", maxDepth: 3, status: true, desc: "無子類別測試用" }
+        ];
+
+        let categories = [
+            { id: 101, typeId: 1, name: "授權費", parentId: null, level: 1, children: [
+                { id: 1011, typeId: 1, name: "永久授權", parentId: 101, level: 2, children: [] }, 
+                { id: 1012, typeId: 1, name: "雲端訂閱", parentId: 101, level: 2, children: [] }  
+            ]},
+            { id: 102, typeId: 1, name: "維護費", parentId: null, level: 1, children: [] },
+            { id: 201, typeId: 2, name: "伺服器", parentId: null, level: 1, children: [
+                { id: 2011, typeId: 2, name: "機架式", parentId: 201, level: 2, children: [] },
+                { id: 2012, typeId: 2, name: "直立式", parentId: 201, level: 2, children: [] }
+            ]},
+            { id: 202, typeId: 2, name: "儲存設備", parentId: null, level: 1, children: [] }
+        ];
+
+        let pendingProjects = [
+            { id: "P001", name: "AI 客服機器人開發 Ver 2.0", date: "2024-02-10" },
+            { id: "P002", name: "ERP 系統擴充模組", date: "2024-02-12" },
+            { id: "P003", name: "Dell Server 採購案", date: "2024-02-15" }
+        ];
+
+        let mappedProjects = [
+            { id: "M001", name: "CRM 系統導入案 (A客戶)", path: "軟體服務 > 授權費 > 永久授權", categoryId: 1011, typeId: 1 },
+            { id: "M002", name: "2024 年度硬體維護", path: "軟體服務 > 維護費", categoryId: 102, typeId: 1 }
+        ];
+
+        // --- HELPER ---
+        function switchTab(tabId, navEl) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            navEl.classList.add('active');
+            
+            if(tabId === 'tab1') renderTypeGrid();
+            if(tabId === 'tab2') { populateTypeSelectors(); loadTreeForEdit(); }
+            if(tabId === 'tab3') renderOverview();
+            if(tabId === 'tab4') renderPendingList();
+            updateBadges();
+        }
+        function updateBadges() {
+            const count = pendingProjects.length;
+            const els = [document.getElementById('headerBadge'), document.getElementById('navBadge')];
+            els.forEach(el => { if(el) { el.innerText = count; if(count === 0) el.classList.add('hidden'); else el.classList.remove('hidden'); } });
+            const lbl = document.getElementById('pendingCountLabel');
+            if(lbl) lbl.innerText = `${count} 筆未處理`;
+        }
+
+        // --- TAB 1: TYPES ---
+        function renderTypeGrid() {
+            const tbody = document.getElementById('typeGridBody'); tbody.innerHTML = '';
+            revenueTypes.forEach(t => {
+                const statusBadge = t.status ? `<span class="k-badge k-badge-success">啟用</span>` : `<span class="k-badge k-badge-neutral">停用</span>`;
+                tbody.innerHTML += `<tr class="k-grid-row"><td>${t.name}</td><td>${t.maxDepth}</td><td>${statusBadge}</td><td>${t.desc}</td><td><button class="k-button k-button-flat" onclick="editType(${t.id})"><i class="fa-solid fa-pen"></i></button><button class="k-button k-button-flat text-red-500" onclick="deleteType(${t.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+            });
+        }
+        function openTypeModal(id=null) { document.getElementById('typeModal').classList.remove('hidden'); if(id) { const t=revenueTypes.find(x=>x.id===id); document.getElementById('typeIdInput').value=t.id; document.getElementById('typeNameInput').value=t.name; document.getElementById('typeDepthInput').value=t.maxDepth; document.getElementById('typeDescInput').value=t.desc; } else { document.getElementById('typeIdInput').value=""; document.getElementById('typeNameInput').value=""; document.getElementById('typeDepthInput').value=3; document.getElementById('typeDescInput').value=""; } }
+        function closeTypeModal() { document.getElementById('typeModal').classList.add('hidden'); }
+        function saveType() { 
+            const id=document.getElementById('typeIdInput').value; const name=document.getElementById('typeNameInput').value; const depth=parseInt(document.getElementById('typeDepthInput').value); const desc=document.getElementById('typeDescInput').value;
+            if(!name){alert("請輸入名稱");return;}
+            if(id){ const idx=revenueTypes.findIndex(x=>x.id==id); revenueTypes[idx]={...revenueTypes[idx],name,maxDepth:depth,desc}; } else { const newId=Math.max(...revenueTypes.map(x=>x.id),0)+1; revenueTypes.push({id:newId,name,maxDepth:depth,status:true,desc}); }
+            closeTypeModal(); renderTypeGrid(); populateTypeSelectors();
+        }
+        function editType(id){openTypeModal(id);}
+        function deleteType(id){if(confirm("確定刪除?")) { revenueTypes=revenueTypes.filter(x=>x.id!==id); renderTypeGrid(); }}
+
+        // --- TAB 2: HIERARCHY ---
+        let currentEditNode = null; let currentTypeMaxDepth = 3; let selectedTypeId = 1;
+        function populateTypeSelectors() {
+            const sels = ['catTypeSelector'];
+            sels.forEach(sid => { const el=document.getElementById(sid); const prev=el.value; el.innerHTML=revenueTypes.map(t=>`<option value="${t.id}">${t.name} (Max: ${t.maxDepth})</option>`).join(''); if(prev && el.querySelector(`option[value="${prev}"]`)) el.value=prev; else if(revenueTypes.length>0) el.value=revenueTypes[0].id; });
+        }
+        function loadTreeForEdit() {
+            const typeId = parseInt(document.getElementById('catTypeSelector').value); selectedTypeId = typeId;
+            const typeDef = revenueTypes.find(t => t.id === typeId); currentTypeMaxDepth = typeDef ? typeDef.maxDepth : 3;
+            const filteredCats = categories.filter(c => c.typeId === typeId && c.parentId === null);
+            document.getElementById('editTreeContainer').innerHTML = renderRecursiveTree(filteredCats);
+            document.getElementById('emptyState').classList.remove('hidden'); document.getElementById('editState').classList.add('hidden'); currentEditNode = null;
+        }
+        function renderRecursiveTree(nodes) {
+            if(!nodes||nodes.length===0) return ''; let html='';
+            nodes.forEach(node => {
+                const hasChildren = node.children && node.children.length > 0;
+                let warningHtml = (!hasChildren && node.level < currentTypeMaxDepth) ? `<span class="warning-badge" title="尚未達到最大階層"><i class="fa-solid fa-circle-exclamation"></i> 需建立子階</span>` : '';
+                html += `<div class="k-treeview-item"><div class="k-treeview-content" onclick="onNodeClick(this,${node.id})" data-nodeid="${node.id}"><div class="tree-node-info"><i class="fa-solid ${hasChildren?'fa-caret-down':''} text-gray-400 w-4 text-center"></i><i class="fa-regular ${hasChildren?'fa-folder text-yellow-500':'fa-file-lines text-gray-400'}"></i><span>${node.name}</span>${warningHtml}</div><button class="tree-actions k-button-icon" onclick="deleteNodeById(event,${node.id})"><i class="fa-solid fa-trash"></i></button></div><div class="k-tree-group">${renderRecursiveTree(node.children)}</div></div>`;
+            }); return html;
+        }
+        function onNodeClick(el,id){ document.querySelectorAll('.k-treeview-content').forEach(x=>x.classList.remove('k-selected')); el.classList.add('k-selected'); currentEditNode=findNodeRecursive(categories,id); updateEditPanelUI(currentEditNode); }
+        function findNodeRecursive(nodes,id){ for(let node of nodes){ if(node.id===id)return node; if(node.children && node.children.length>0){let f=findNodeRecursive(node.children,id); if(f)return f;} } return null; }
+        function updateEditPanelUI(node){ document.getElementById('emptyState').classList.add('hidden'); document.getElementById('editState').classList.remove('hidden'); document.getElementById('editCatNameTitle').innerText=node.name; document.getElementById('editCatId').innerText=node.id; document.getElementById('editCatNameInput').value=node.name; document.getElementById('editCatLevelBadge').innerText="Level "+node.level; document.getElementById('lblMaxDepth').innerText=currentTypeMaxDepth; const btn=document.getElementById('btnAddSubCat'); const warn=document.getElementById('maxDepthWarning'); if(node.level>=currentTypeMaxDepth){btn.disabled=true;warn.classList.remove('hidden');}else{btn.disabled=false;warn.classList.add('hidden');} }
+        function saveCategory(){ if(currentEditNode){ currentEditNode.name=document.getElementById('editCatNameInput').value; loadTreeForEdit(); } }
+        
+        function openAddCategoryModal(isRoot){ document.getElementById('addCategoryModal').classList.remove('hidden'); document.getElementById('addCatIsRoot').value=isRoot; document.getElementById('addCatName').value=""; document.getElementById('addCatInfo').innerText=isRoot?`於類型: ${revenueTypes.find(t=>t.id===selectedTypeId).name}`:`於: ${currentEditNode.name}`; }
+        function closeAddCategoryModal(){document.getElementById('addCategoryModal').classList.add('hidden');}
+        function confirmAddCategory(){
+            const isRoot=document.getElementById('addCatIsRoot').value==="true"; const name=document.getElementById('addCatName').value; if(!name)return;
+            const newId=Date.now();
+            if(isRoot){ categories.push({id:newId,typeId:selectedTypeId,name,parentId:null,level:1,children:[]}); }
+            else{ if(!currentEditNode.children)currentEditNode.children=[]; currentEditNode.children.push({id:newId,typeId:currentEditNode.typeId,name,parentId:currentEditNode.id,level:currentEditNode.level+1,children:[]}); }
+            closeAddCategoryModal(); loadTreeForEdit();
+        }
+        function deleteCategory(){ if(currentEditNode) deleteNodeById(null,currentEditNode.id); }
+        function deleteNodeById(e,id){ if(e)e.stopPropagation(); if(confirm("確定刪除?")){ deleteNodeRecursive(categories,id); loadTreeForEdit(); } }
+        function deleteNodeRecursive(nodes,id){ for(let i=0;i<nodes.length;i++){ if(nodes[i].id===id){nodes.splice(i,1);return true;} if(nodes[i].children.length>0 && deleteNodeRecursive(nodes[i].children,id))return true; } return false; }
+
+        // --- TAB 3: OVERVIEW (NEW SPLIT) ---
+        let overviewSelectedTypeId = null;
+
+        function renderOverview() {
+            renderOverviewTypeList();
+            // If nothing selected, select first
+            if(!overviewSelectedTypeId && revenueTypes.length > 0) {
+                selectOverviewType(revenueTypes[0].id);
+            } else if (overviewSelectedTypeId) {
+                selectOverviewType(overviewSelectedTypeId);
+            }
+        }
+
+        function renderOverviewTypeList() {
+            const container = document.getElementById('overviewTypeList');
+            container.innerHTML = '';
+            revenueTypes.forEach(t => {
+                const isActive = (t.id === overviewSelectedTypeId) ? 'selected' : '';
+                // Count projects
+                const count = mappedProjects.filter(p => p.typeId === t.id).length;
+                container.innerHTML += `
+                    <div class="overview-type-item ${isActive}" onclick="selectOverviewType(${t.id})">
+                        <span class="font-medium text-gray-700">${t.name}</span>
+                        <span class="count-badge">${count}</span>
+                    </div>
+                `;
+            });
+        }
+
+        function selectOverviewType(typeId) {
+            overviewSelectedTypeId = typeId;
+            renderOverviewTypeList(); // Update active state
+            
+            const container = document.getElementById('overviewTreeContainer');
+            container.innerHTML = '';
+
+            const typeDef = revenueTypes.find(t => t.id === typeId);
+            const typeCats = categories.filter(c => c.typeId === typeId && c.parentId === null);
+            
+            if(typeCats.length === 0 && mappedProjects.filter(p => p.typeId === typeId).length === 0) {
+                 container.innerHTML = `<div class="flex items-center justify-center h-full text-gray-400">此類型尚無資料</div>`;
+                 return;
+            }
+
+            typeCats.forEach(cat => renderOverviewTreeRow(container, cat, 0));
+        }
+
+        function renderOverviewTreeRow(container, node, indent) {
+            const indentPx = indent * 20;
+            const icon = (node.children && node.children.length > 0) ? 'fa-folder text-yellow-500' : 'fa-folder-open text-yellow-500';
+            
+            // Render Category
+            const div = document.createElement('div');
+            div.className = 'k-treegrid-row';
+            div.innerHTML = `
+                <div style="flex:1; padding-left: ${indentPx}px">
+                    <i class="fa-solid ${icon} mr-2"></i> <span class="text-gray-700 font-medium">${node.name}</span>
+                </div>
+                <div class="w-24 text-xs text-gray-400">類別</div>
+                <div class="w-24"><button class="k-button text-xs k-button-flat" disabled></button></div>
+            `;
+            container.appendChild(div);
+
+            // Render Projects inside this category
+            const projects = mappedProjects.filter(p => p.categoryId === node.id);
+            projects.forEach(p => {
+                const pDiv = document.createElement('div');
+                pDiv.className = 'k-treegrid-row bg-blue-50';
+                pDiv.innerHTML = `
+                    <div style="flex:1; padding-left: ${indentPx + 24}px; color: #0058E9;">
+                        <i class="fa-regular fa-file-lines mr-2"></i> ${p.name}
+                    </div>
+                    <div class="w-24"><span class="k-badge k-badge-success">已設定</span></div>
+                    <div class="w-24"><button class="k-button text-xs" onclick="editMapping('${p.id}')">變更</button></div>
+                `;
+                container.appendChild(pDiv);
+            });
+
+            // Recurse
+            if (node.children) {
+                node.children.forEach(child => renderOverviewTreeRow(container, child, indent + 1));
+            }
+        }
+
+
+        // --- TAB 4 & MAPPING MODAL ---
+        let mappingSelectedTypeId = null;
+        let mappingSelectedLeafId = null;
+        let mappingSelectedPath = "";
+
+        function renderPendingList() {
+            const container = document.getElementById('pendingListContainer'); container.innerHTML = '';
+            if(pendingProjects.length===0){container.innerHTML=`<div class="text-center p-8 text-gray-400">無待處理項目</div>`; updateBadges(); return;}
+            pendingProjects.forEach(p => {
+                container.innerHTML += `<div class="bg-white border border-gray-200 rounded p-4 flex justify-between items-center shadow-sm hover:shadow-md transition"><div><h3 class="font-bold text-gray-800">${p.name}</h3><div class="text-xs text-gray-400 mt-1"><i class="fa-regular fa-calendar"></i> ${p.date}</div></div><button class="k-button k-button-primary" onclick="openMappingModal('${p.id}','${p.name}')">立即設定 <i class="fa-solid fa-arrow-right ml-1"></i></button></div>`;
+            }); updateBadges();
+        }
+
+        function openMappingModal(pid, pname, isEdit=false) {
+            document.getElementById('mappingModal').classList.remove('hidden');
+            document.getElementById('mappingProjectId').value = pid;
+            document.getElementById('mappingProjectName').innerText = pname;
+            document.getElementById('mappingProjectName').dataset.isEdit = isEdit;
+            renderMappingTypeList();
+            document.getElementById('mappingTreeContainer').innerHTML = `<div class="flex items-center justify-center h-full text-gray-400 text-sm"><i class="fa-solid fa-arrow-left mr-2"></i> 請先從左側選擇一項類型</div>`;
+            document.getElementById('rightPanelHint').innerText = "";
+            document.getElementById('btnSaveMapping').disabled = true;
+            mappingSelectedTypeId = null; mappingSelectedLeafId = null;
+        }
+        function closeMappingModal() { document.getElementById('mappingModal').classList.add('hidden'); }
+        function renderMappingTypeList() {
+            const container = document.getElementById('mappingTypeList'); container.innerHTML = '';
+            revenueTypes.forEach(t => {
+                const isActive = (t.id === mappingSelectedTypeId) ? 'selected' : '';
+                container.innerHTML += `<div class="type-item ${isActive}" onclick="selectMappingType(${t.id}, ${t.maxDepth})"><span>${t.name}</span><span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">Max: ${t.maxDepth}</span></div>`;
+            });
+        }
+        function selectMappingType(typeId, maxDepth) {
+            mappingSelectedTypeId = typeId; renderMappingTypeList();
+            const typeCats = categories.filter(c => c.typeId === typeId && c.parentId === null);
+            const treeContainer = document.getElementById('mappingTreeContainer');
+            const treeHtml = renderMappingTree(typeCats, "", maxDepth);
+            treeContainer.innerHTML = treeHtml;
+            const hasValidNodes = treeContainer.querySelector('.ddt-item.leaf:not(.disabled)');
+            if (!hasValidNodes) {
+                treeContainer.innerHTML = `<div class="error-overlay"><i class="fa-solid fa-circle-exclamation text-4xl mb-3"></i><div class="font-bold text-lg">⚠️ 錯誤</div><div class="text-sm mt-1">此營收類型-子階尚未建立完成</div><div class="text-xs text-gray-500 mt-2">請先至「類別階層維護」建立完整結構<br>(需達到 Level ${maxDepth})</div></div>`;
+                document.getElementById('rightPanelHint').innerText = "無法選擇";
+            } else { document.getElementById('rightPanelHint').innerText = ""; }
+            document.getElementById('btnSaveMapping').disabled = true; mappingSelectedLeafId = null;
+        }
+        function renderMappingTree(nodes, parentPath, maxDepth) {
+            if(!nodes || nodes.length === 0) return ''; let html = '';
+            nodes.forEach(node => {
+                const hasChildren = node.children && node.children.length > 0; const isLeaf = !hasChildren;
+                const currentPath = parentPath ? `${parentPath} > ${node.name}` : node.name; const paddingLeft = (node.level - 1) * 20;
+                if (isLeaf) {
+                    if (node.level < maxDepth) {
+                        html += `<div class="ddt-item disabled" style="padding-left: ${paddingLeft + 8}px"><i class="fa-solid fa-ban text-gray-300" title="階層不足"></i> <span class="text-gray-400">${node.name} <span class="text-xs text-red-300">(需建立子階)</span></span></div>`;
+                    } else {
+                        const safeName = node.name.replace(/'/g, "\\'"); const safePath = currentPath.replace(/'/g, "\\'");
+                        html += `<div class="ddt-item leaf" style="padding-left: ${paddingLeft + 8}px" onclick="selectMappingNode(this, '${safeName}', ${node.id}, '${safePath}')"><i class="fa-regular fa-file-lines text-green-500"></i> <span>${node.name}</span></div>`;
+                    }
+                } else {
+                    html += `<div class="ddt-item disabled" style="padding-left: ${paddingLeft + 8}px"><i class="fa-solid fa-folder text-yellow-500"></i> <span>${node.name}</span></div><div class="ddt-group">${renderMappingTree(node.children, currentPath, maxDepth)}</div>`;
+                }
+            }); return html;
+        }
+        function selectMappingNode(el, name, id, fullPath) {
+            document.querySelectorAll('.ddt-item').forEach(x => x.classList.remove('selected')); el.classList.add('selected');
+            mappingSelectedLeafId = id; const typeName = revenueTypes.find(t=>t.id == mappingSelectedTypeId).name;
+            mappingSelectedPath = typeName + " > " + fullPath;
+            document.getElementById('btnSaveMapping').disabled = false;
+        }
+        function editMapping(mappedId) {
+            const item = mappedProjects.find(m => m.id === mappedId);
+            if(item) {
+                openMappingModal(item.id, item.name, true);
+                const t = revenueTypes.find(x => x.id === item.typeId);
+                selectMappingType(t.id, t.maxDepth);
+                document.getElementById('btnSaveMapping').disabled = false; mappingSelectedLeafId = item.categoryId; mappingSelectedPath = item.path;
+            }
+        }
+        function submitMapping() {
+            const btn = document.getElementById('btnSaveMapping'); const pid = document.getElementById('mappingProjectId').value;
+            const pname = document.getElementById('mappingProjectName').innerText; const isEdit = document.getElementById('mappingProjectName').dataset.isEdit === "true";
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+            setTimeout(() => {
+                if(!isEdit) {
+                    pendingProjects = pendingProjects.filter(p => p.id !== pid);
+                    mappedProjects.push({ id: pid, name: pname, path: mappingSelectedPath, categoryId: mappingSelectedLeafId, typeId: mappingSelectedTypeId });
+                    renderPendingList();
+                } else {
+                    const idx = mappedProjects.findIndex(m => m.id === pid);
+                    if(idx >= 0) { mappedProjects[idx].path = mappingSelectedPath; mappedProjects[idx].categoryId = mappingSelectedLeafId; mappedProjects[idx].typeId = mappingSelectedTypeId; }
+                    renderOverview(); // Refresh overview
+                }
+                closeMappingModal(); btn.innerHTML = '確認儲存';
+            }, 500);
+        }
+
+        // Init
+        renderTypeGrid();
+        updateBadges();
+    </script>
+</body>
+</html>
