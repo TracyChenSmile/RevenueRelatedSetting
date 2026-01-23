@@ -327,31 +327,40 @@
     <script>
         // --- DOMAIN DATA (Semiconductor) ---
         let revenueTypes = [
-            { id: 1, name: "機台銷售 (Equipment)", role: "Sales", maxDepth: 3, desc: "Process Tools" },
-            { id: 2, name: "零件耗材 (Spares)", role: "Admin", maxDepth: 2, desc: "Parts & Consumables" },
-            { id: 3, name: "技術服務 (Service)", role: "Finance", maxDepth: 2, desc: "Labor & Maintenance" }
+            { id: 1, name: "公司財報分類", role: "Finance", maxDepth: 3, desc: "Financial Reporting" },
+            { id: 2, name: "法說會分類", role: "Admin", maxDepth: 2, desc: "Investor Conference" },
+            { id: 3, name: "業務分類", role: "Sales", maxDepth: 2, desc: "Business Unit View" }
         ];
 
         let categories = [
-            // Type 1: Equipment (Max 3)
-            { id: 101, typeId: 1, name: "蝕刻製程 (Etch)", parentId: null, level: 1, children: [
-                { id: 1011, typeId: 1, name: "導體蝕刻 (Conductor)", parentId: 101, level: 2, children: [
-                    { id: 10111, typeId: 1, name: "高深寬比機台", parentId: 1011, level: 3, children: []} // Complete
+            // Type 1: 公司財報分類 (Max 3)
+            { id: 101, typeId: 1, name: "銷售機台", parentId: null, level: 1, children: [
+                { id: 1011, typeId: 1, name: "蝕刻機台", parentId: 101, level: 2, children: [
+                    { id: 10111, typeId: 1, name: "高階蝕刻機", parentId: 1011, level: 3, children: []} // Complete
                 ]},
-                { id: 1012, typeId: 1, name: "介電質蝕刻 (Dielectric)", parentId: 101, level: 2, children: []} // Incomplete L2 (Needs L3)
+                { id: 1012, typeId: 1, name: "自製機台", parentId: 101, level: 2, children: []} // Incomplete L2 (Needs L3)
             ]},
-            { id: 102, typeId: 1, name: "薄膜製程 (Deposition)", parentId: null, level: 1, children: []}, // Incomplete L1 (Needs L2, L3)
+            { id: 102, typeId: 1, name: "服務收入", parentId: null, level: 1, children: []}, // Incomplete L1 (Needs L2, L3)
+            { id: 103, typeId: 1, name: "其他", parentId: null, level: 1, children: []}, // Incomplete L1
 
-            // Type 2: Spares (Max 2)
-            { id: 201, typeId: 2, name: "核心零件", parentId: null, level: 1, children: [
-                { id: 2011, typeId: 2, name: "靜電吸盤 (ESC)", parentId: 201, level: 2, children: []} // Complete
+            // Type 2: 法說會分類 (Max 2)
+            { id: 201, typeId: 2, name: "銷售機台", parentId: null, level: 1, children: [
+                { id: 2011, typeId: 2, name: "主力機型", parentId: 201, level: 2, children: []} // Complete
             ]},
-            { id: 202, typeId: 2, name: "一般耗材", parentId: null, level: 1, children: []}, // Incomplete L1 (Needs L2)
+            { id: 202, typeId: 2, name: "自製機台", parentId: null, level: 1, children: []}, // Incomplete L1
+            { id: 203, typeId: 2, name: "服務", parentId: null, level: 1, children: []}, // Incomplete L1
+            { id: 204, typeId: 2, name: "新產品", parentId: null, level: 1, children: []}, // Incomplete L1
+            { id: 205, typeId: 2, name: "其他", parentId: null, level: 1, children: []}, // Incomplete L1
 
-            // Type 3: Service (Max 2)
-            { id: 301, typeId: 3, name: "人力派遣", parentId: null, level: 1, children: [
-                { id: 3011, typeId: 3, name: "駐廠服務 (On-site)", parentId: 301, level: 2, children: []}
-            ]}
+            // Type 3: 業務分類 (Max 2)
+            { id: 301, typeId: 3, name: "銷售機台", parentId: null, level: 1, children: [
+                { id: 3011, typeId: 3, name: "新客戶", parentId: 301, level: 2, children: []}
+            ]},
+            { id: 302, typeId: 3, name: "自製機台", parentId: null, level: 1, children: []},
+            { id: 303, typeId: 3, name: "測試服務", parentId: null, level: 1, children: []},
+            { id: 304, typeId: 3, name: "維修服務", parentId: null, level: 1, children: []},
+            { id: 305, typeId: 3, name: "保養服務", parentId: null, level: 1, children: []},
+            { id: 306, typeId: 3, name: "其他服務", parentId: null, level: 1, children: []}
         ];
 
         let salesItemMaster = [
@@ -363,8 +372,8 @@
         ];
 
         let mappings = [
-            { itemId: "S001", typeId: 1, categoryId: 10111 }, // Mapped to Equipment
-            { itemId: "S002", typeId: 2, categoryId: 2011 }  // Mapped to Spares
+            { itemId: "S001", typeId: 1, categoryId: 10111 }, // Mapped to Type 1
+            { itemId: "S002", typeId: 3, categoryId: 3011 }  // Mapped to Type 3
         ];
 
         // --- HELPER ---
