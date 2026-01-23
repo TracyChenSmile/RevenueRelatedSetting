@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>營收分類管理系統 V16 (UX優化版)</title>
+    <title>營收分類管理系統 V17 (銷售項目版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -150,8 +150,8 @@
         <div class="flex items-center gap-3">
             <div class="bg-blue-600 text-white w-8 h-8 rounded flex items-center justify-center font-bold">R</div>
             <div>
-                <h1 class="font-bold text-lg text-gray-700">營收分類管理系統 V16</h1>
-                <div class="text-xs text-gray-400">半導體設備專用版 (Auto Layout & Unassign)</div>
+                <h1 class="font-bold text-lg text-gray-700">營收分類管理系統 V17</h1>
+                <div class="text-xs text-gray-400">半導體設備專用版 (銷售項目映射)</div>
             </div>
         </div>
         <div class="flex gap-4 items-center">
@@ -172,7 +172,7 @@
     <div class="nav-tabs">
         <div class="nav-item active" onclick="switchTab('tab1', this)">1. 類型與階層設定</div>
         <div class="nav-item" onclick="switchTab('tab2', this)">
-            2. 專案歸屬管理 <span class="nav-item-badge" id="navBadge">0</span>
+            2. 銷售項目歸屬管理 <span class="nav-item-badge" id="navBadge">0</span>
         </div>
     </div>
 
@@ -223,14 +223,14 @@
         </div>
     </div>
 
-    <!-- View 2: 專案歸屬管理 (Enhanced Layout) -->
+    <!-- View 2: 銷售項目歸屬管理 (Enhanced Layout) -->
     <div id="tab2" class="view-section" style="padding:20px; height:100%;">
         <div class="h-full flex flex-col">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-700"><i class="fa-solid fa-diagram-project mr-2"></i>專案歸屬工作檯</h2>
+                <h2 class="text-xl font-bold text-gray-700"><i class="fa-solid fa-diagram-project mr-2"></i>銷售項目歸屬工作檯</h2>
                 <div class="text-sm text-gray-500 bg-blue-50 px-3 py-1 rounded border border-blue-100">
                     <i class="fa-solid fa-circle-info text-blue-500 mr-1"></i> 
-                    提示：將右側「未歸屬專案」拖曳至中間分類。若需換組，請點擊 <i class="fa-solid fa-arrow-right-from-bracket text-gray-400"></i> 先移回待設定區。
+                    提示：將右側「未歸屬項目」拖曳至中間分類。若需換組，請點擊 <i class="fa-solid fa-arrow-right-from-bracket text-gray-400"></i> 移回待設定區。
                 </div>
             </div>
 
@@ -255,11 +255,11 @@
                         <span class="text-xs font-normal text-gray-400" id="assignCenterHint"></span>
                     </div>
                     
-                    <!-- Search Bar (Searches both Categories AND Projects) -->
+                    <!-- Search Bar (Searches both Categories AND Sales Items) -->
                     <div class="p-2 bg-white border-b border-gray-100">
                         <div class="relative">
                             <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" class="k-textbox pl-9" id="treeSearchInput" placeholder="搜尋專案或類別名稱 (如: 蝕刻, Fab12)..." onkeyup="filterTree(this.value)">
+                            <input type="text" class="k-textbox pl-9" id="treeSearchInput" placeholder="搜尋銷售項目或類別名稱 (如: 蝕刻, Fab12)..." onkeyup="filterTree(this.value)">
                         </div>
                     </div>
 
@@ -271,7 +271,7 @@
                 <!-- Pane 3 (Right - Draggable Source) - Auto Hide -->
                 <div id="assignRightPane" class="w-1/4 bg-gray-50 flex flex-col transition-all duration-300">
                     <div class="p-3 border-b border-gray-200 bg-gray-100 font-bold text-gray-700 flex justify-between items-center">
-                        <span>3. 待歸屬專案</span>
+                        <span>3. 待歸屬銷售項目</span>
                         <span class="bg-red-100 text-red-600 text-xs px-2 rounded-full" id="pane3Badge">0</span>
                     </div>
                     <div id="assignPendingList" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
@@ -354,17 +354,17 @@
             ]}
         ];
 
-        let projectMaster = [
-            { id: "P001", name: "TSMC Fab12 P8 Etcher Tool Install", date: "2024-02-10" },
-            { id: "P002", name: "UMC Fab12A ESC Annual Contract", date: "2024-02-12" },
-            { id: "P003", name: "Micron A3 Retrofit Project", date: "2024-02-15" },
-            { id: "P004", name: "VIS Fab1 Furnace Upgrade", date: "2024-02-20" },
-            { id: "P005", name: "PSMC P3 Copper Plating Tool", date: "2024-02-22" }
+        let salesItemMaster = [
+            { id: "S001", name: "TSMC Fab12 P8 Etcher Tool Install", date: "2024-02-10" },
+            { id: "S002", name: "UMC Fab12A ESC Annual Contract", date: "2024-02-12" },
+            { id: "S003", name: "Micron A3 Retrofit Project", date: "2024-02-15" },
+            { id: "S004", name: "VIS Fab1 Furnace Upgrade", date: "2024-02-20" },
+            { id: "S005", name: "PSMC P3 Copper Plating Tool", date: "2024-02-22" }
         ];
 
         let mappings = [
-            { projectId: "P001", typeId: 1, categoryId: 10111 }, 
-            { projectId: "P002", typeId: 2, categoryId: 2011 }  
+            { itemId: "S001", typeId: 1, categoryId: 10111 }, // Mapped to Equipment
+            { itemId: "S002", typeId: 2, categoryId: 2011 }  // Mapped to Spares
         ];
 
         // --- HELPER ---
@@ -388,7 +388,7 @@
             let totalUnset = 0;
             revenueTypes.forEach(t => {
                 const mappedCount = mappings.filter(m => m.typeId === t.id).length;
-                totalUnset += (projectMaster.length - mappedCount);
+                totalUnset += (salesItemMaster.length - mappedCount);
             });
             const badge = document.getElementById('navBadge');
             if(badge) { badge.innerText = totalUnset; if(totalUnset===0) badge.classList.add('hidden'); else badge.classList.remove('hidden'); }
@@ -513,7 +513,7 @@
             const tbody = document.getElementById('assignTypeGridBody'); tbody.innerHTML = '';
             revenueTypes.forEach(t => {
                 const mappedCount = mappings.filter(m => m.typeId === t.id).length;
-                const pendingCount = projectMaster.length - mappedCount;
+                const pendingCount = salesItemMaster.length - mappedCount;
                 const isSelected = (t.id === selectedTypeId_Tab2) ? 'bg-blue-50 border-l-4 border-blue-600' : 'hover:bg-gray-50 border-l-4 border-transparent cursor-pointer';
                 const pendingBadge = pendingCount > 0 ? `<span class="k-badge k-badge-pending">${pendingCount}</span>` : `<span class="text-gray-300 text-xs">0</span>`;
                 tbody.innerHTML += `<tr class="${isSelected} transition-all border-b border-gray-100" onclick="selectTypeRow_Tab2(${t.id}, ${t.maxDepth})"><td class="p-2 text-sm font-medium text-gray-700">${t.name}</td><td class="p-2 text-center text-xs text-gray-500">${mappedCount}</td><td class="p-2 text-center">${pendingBadge}</td></tr>`;
@@ -543,13 +543,13 @@
         }
 
         function renderAssignTreeNodes(node, indent, searchText) {
-            // Enhanced Search: Check Category Name OR Mapped Project Name
+            // Enhanced Search: Check Category Name OR Mapped Item Name
             let matchSelf = node.name.toLowerCase().includes(searchText.toLowerCase());
             
-            // Check mapped projects for match
+            // Check mapped items for match
             const projs = mappings.filter(m => m.categoryId === node.id && m.typeId === selectedTypeId_Tab2);
             const matchProject = projs.some(m => {
-                const p = projectMaster.find(x => x.id === m.projectId);
+                const p = salesItemMaster.find(x => x.id === m.itemId);
                 return p && p.name.toLowerCase().includes(searchText.toLowerCase());
             });
             
@@ -602,8 +602,8 @@
             const projs = mappings.filter(m => m.categoryId === catId && m.typeId === selectedTypeId_Tab2);
             let html = '';
             projs.forEach(m => {
-                const p = projectMaster.find(x => x.id === m.projectId);
-                // Filter project if search text is present
+                const p = salesItemMaster.find(x => x.id === m.itemId);
+                // Filter item if search text is present
                 if(p && (searchText === "" || p.name.toLowerCase().includes(searchText.toLowerCase()))) { 
                     html += `
                         <div class="draggable-item flex items-center bg-blue-50 border-blue-200 text-blue-800 p-2 mb-1 rounded text-sm shadow-sm group">
@@ -621,8 +621,8 @@
         }
 
         // ** Unassign Logic **
-        function unassignProject(projectId) {
-            const idx = mappings.findIndex(m => m.typeId === selectedTypeId_Tab2 && m.projectId === projectId);
+        function unassignProject(itemId) {
+            const idx = mappings.findIndex(m => m.typeId === selectedTypeId_Tab2 && m.itemId === itemId);
             if (idx >= 0) {
                 mappings.splice(idx, 1);
                 renderAssignmentWorkbench();
@@ -636,8 +636,8 @@
             const centerPane = document.getElementById('assignCenterPane');
             
             container.innerHTML = '';
-            const mappedIds = mappings.filter(m => m.typeId === typeId).map(m => m.projectId);
-            const pendingItems = projectMaster.filter(p => !mappedIds.includes(p.id));
+            const mappedIds = mappings.filter(m => m.typeId === typeId).map(m => m.itemId);
+            const pendingItems = salesItemMaster.filter(p => !mappedIds.includes(p.id));
             document.getElementById('pane3Badge').innerText = pendingItems.length;
             
             // Auto Layout: Hide Right Pane if empty
@@ -658,7 +658,7 @@
 
         // --- DRAG & DROP ---
         let dragSrcProject = null;
-        function handleDragStart(e, projectId, sourceType) { dragSrcProject = projectId; e.dataTransfer.effectAllowed = 'move'; }
+        function handleDragStart(e, itemId, sourceType) { dragSrcProject = itemId; e.dataTransfer.effectAllowed = 'move'; }
         
         function handleDragOver(e, el, isForbidden) { 
             e.preventDefault(); 
@@ -687,9 +687,9 @@
             }
 
             if (!dragSrcProject) return;
-            const oldIdx = mappings.findIndex(m => m.typeId === selectedTypeId_Tab2 && m.projectId === dragSrcProject);
+            const oldIdx = mappings.findIndex(m => m.typeId === selectedTypeId_Tab2 && m.itemId === dragSrcProject);
             if (oldIdx >= 0) mappings.splice(oldIdx, 1);
-            mappings.push({ projectId: dragSrcProject, typeId: selectedTypeId_Tab2, categoryId: targetCatId });
+            mappings.push({ itemId: dragSrcProject, typeId: selectedTypeId_Tab2, categoryId: targetCatId });
             renderAssignmentWorkbench(); updateTotalBadge(); dragSrcProject = null;
         }
 
