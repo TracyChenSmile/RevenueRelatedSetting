@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>營收分類管理系統 V17 (銷售項目版)</title>
+    <title>營收分類管理系統 V18 (銷售項目版 - 詳細資訊)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -150,8 +150,8 @@
         <div class="flex items-center gap-3">
             <div class="bg-blue-600 text-white w-8 h-8 rounded flex items-center justify-center font-bold">R</div>
             <div>
-                <h1 class="font-bold text-lg text-gray-700">營收分類管理系統 V17</h1>
-                <div class="text-xs text-gray-400">半導體設備專用版 (銷售項目映射)</div>
+                <h1 class="font-bold text-lg text-gray-700">營收分類管理系統 V18</h1>
+                <div class="text-xs text-gray-400">半導體設備專用版 (詳細項目資訊)</div>
             </div>
         </div>
         <div class="flex gap-4 items-center">
@@ -223,7 +223,7 @@
         </div>
     </div>
 
-    <!-- View 2: 銷售項目歸屬管理 (Enhanced Layout) -->
+    <!-- View 2: 銷售項目歸屬管理 (Enhanced Layout with Detail Info) -->
     <div id="tab2" class="view-section" style="padding:20px; height:100%;">
         <div class="h-full flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -259,7 +259,7 @@
                     <div class="p-2 bg-white border-b border-gray-100">
                         <div class="relative">
                             <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            <input type="text" class="k-textbox pl-9" id="treeSearchInput" placeholder="搜尋銷售項目或類別名稱 (如: 蝕刻, Fab12)..." onkeyup="filterTree(this.value)">
+                            <input type="text" class="k-textbox pl-9" id="treeSearchInput" placeholder="搜尋專案、項目或描述..." onkeyup="filterTree(this.value)">
                         </div>
                     </div>
 
@@ -364,11 +364,11 @@
         ];
 
         let salesItemMaster = [
-            { id: "S001", name: "TSMC Fab12 P8 Etcher Tool Install", date: "2024-02-10" },
-            { id: "S002", name: "UMC Fab12A ESC Annual Contract", date: "2024-02-12" },
-            { id: "S003", name: "Micron A3 Retrofit Project", date: "2024-02-15" },
-            { id: "S004", name: "VIS Fab1 Furnace Upgrade", date: "2024-02-20" },
-            { id: "S005", name: "PSMC P3 Copper Plating Tool", date: "2024-02-22" }
+            { id: "S001", projectName: "TSMC Fab12 P8 Expansion", name: "Etcher Tool Install #01", description: "Main Etching System installation for Phase 8", date: "2024-02-10" },
+            { id: "S002", projectName: "UMC Fab12A Maintenance", name: "ESC Annual Contract 2024", description: "Annual Electrostatic Chuck maintenance service", date: "2024-02-12" },
+            { id: "S003", projectName: "Micron A3 Retrofit", name: "Retrofit Project - Chamber A", description: "Upgrade existing chamber components for higher yield", date: "2024-02-15" },
+            { id: "S004", projectName: "VIS Fab1 Upgrade", name: "Furnace Upgrade - Batch 2", description: "Software and hardware upgrade for Furnace tools", date: "2024-02-20" },
+            { id: "S005", projectName: "PSMC P3 New Line", name: "Copper Plating Tool Setup", description: "Initial setup and calibration of Copper Plating unit", date: "2024-02-22" }
         ];
 
         let mappings = [
@@ -559,7 +559,9 @@
             const projs = mappings.filter(m => m.categoryId === node.id && m.typeId === selectedTypeId_Tab2);
             const matchProject = projs.some(m => {
                 const p = salesItemMaster.find(x => x.id === m.itemId);
-                return p && p.name.toLowerCase().includes(searchText.toLowerCase());
+                return p && (p.name.toLowerCase().includes(searchText.toLowerCase()) || 
+                             p.projectName.toLowerCase().includes(searchText.toLowerCase()) ||
+                             p.description.toLowerCase().includes(searchText.toLowerCase()));
             });
             
             matchSelf = matchSelf || matchProject;
@@ -613,11 +615,18 @@
             projs.forEach(m => {
                 const p = salesItemMaster.find(x => x.id === m.itemId);
                 // Filter item if search text is present
-                if(p && (searchText === "" || p.name.toLowerCase().includes(searchText.toLowerCase()))) { 
+                if(p && (searchText === "" || 
+                         p.name.toLowerCase().includes(searchText.toLowerCase()) || 
+                         p.projectName.toLowerCase().includes(searchText.toLowerCase()) || 
+                         p.description.toLowerCase().includes(searchText.toLowerCase()))) { 
                     html += `
                         <div class="draggable-item flex items-center bg-blue-50 border-blue-200 text-blue-800 p-2 mb-1 rounded text-sm shadow-sm group">
                             <i class="fa-solid fa-grip-vertical text-blue-300 mr-2 cursor-move"></i>
-                            <span class="flex-1 select-none">${p.name}</span>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs text-gray-500 font-bold">${p.projectName}</div>
+                                <div class="font-medium text-sm text-gray-800 truncate">${p.name}</div>
+                                <div class="text-xs text-gray-400 truncate">${p.description}</div>
+                            </div>
                             <div class="flex items-center gap-2">
                                 <button class="action-btn btn-unassign" onclick="unassignProject('${p.id}')" title="移至待設定清單 (解除歸屬)">
                                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -662,7 +671,21 @@
 
             if(pendingItems.length === 0) return;
 
-            pendingItems.forEach(p => { container.innerHTML += `<div class="draggable-item" draggable="true" ondragstart="handleDragStart(event, '${p.id}', 'pending')"><div class="flex items-center justify-between"><h3 class="font-bold text-gray-800 text-sm truncate select-none">${p.name}</h3><i class="fa-solid fa-grip text-gray-300"></i></div><div class="text-xs text-gray-400 mt-1 flex items-center gap-1"><i class="fa-regular fa-clock"></i> ${p.date}</div></div>`; });
+            pendingItems.forEach(p => { container.innerHTML += `
+                <div class="draggable-item" draggable="true" ondragstart="handleDragStart(event, '${p.id}', 'pending')">
+                    <div class="flex items-start justify-between">
+                         <div class="flex-1 min-w-0">
+                            <div class="text-xs text-blue-600 font-bold mb-0.5">${p.projectName}</div>
+                            <h3 class="font-bold text-gray-800 text-sm leading-tight">${p.name}</h3>
+                            <div class="text-xs text-gray-500 mt-1 line-clamp-2" title="${p.description}">${p.description}</div>
+                         </div>
+                         <i class="fa-solid fa-grip text-gray-300 ml-2 mt-1"></i>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2 flex items-center gap-1 border-t pt-1 border-gray-100">
+                        <i class="fa-regular fa-clock"></i> ${p.date}
+                    </div>
+                </div>`; 
+            });
         }
 
         // --- DRAG & DROP ---
